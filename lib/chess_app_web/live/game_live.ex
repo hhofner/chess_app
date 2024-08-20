@@ -1,13 +1,14 @@
 defmodule ChessAppWeb.GameLive do
-  use ChessAppWeb, :live_view 
-  alias ChessApp.Game 
+  use ChessAppWeb, :live_view
+  alias ChessApp.Game
+  alias ChessApp.ChessPieces
 
   @impl true
   def mount(%{"id" => game_id}, _session, socket) do
     if connected?(socket), do: Process.send_after(self(), :update, 1000)
 
     case Game.get_game(game_id) do
-      %{} = game -> {:ok, assign(socket, game: game, game_id: game_id)}
+      %{} = game -> {:ok, assign(socket, game: game, game_id: game_id, board: ChessPieces.initial_position())}
       nil -> {:ok, push_redirect(socket, to: "/")}
     end
   end
@@ -43,8 +44,11 @@ defmodule ChessAppWeb.GameLive do
       <div class="grid grid-rows-8 grid-cols-8">
         <%= for row <- ["8", "7", "6", "5", "4", "3", "2", "1"] do %>
           <%= for col <- ["a", "b", "c", "d", "e", "f", "g", "h"] do %>
-            <div class={"square #{if rem(String.to_integer(row) + :binary.first(col) - 97, 2) == 0, do: "light", else: "dark"}"}>
-              <%= "#{col}#{row}" %>
+            <div class={"square #{if rem(String.to_integer(row) + :binary.first(col) - 97, 2) == 0, do: "bg-white", else: "bg-gray-200 w-12 h-12"}"}>
+              <% square = "#{col}#{row}" %>
+              <div class="text-3xl cursor-pointer" phx-click="select_piece" phx-value-square={square}>
+                <%= @board[square] %>
+              </div>
             </div>
           <% end %>
         <% end %>
